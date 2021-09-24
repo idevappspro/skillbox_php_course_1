@@ -25,7 +25,7 @@ if (!empty($_POST)) {
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <link href="/styles.css" rel="stylesheet">
-    <title>Project - <?= !empty(getPage($menu, parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH))) ? getPage($menu, parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH))['title'] : "(404) Страница не найдена" ?></title>
+    <title>Project - <?= showPageAttr('title'); ?></title>
 </head>
 
 <body>

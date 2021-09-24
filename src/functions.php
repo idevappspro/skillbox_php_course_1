@@ -60,3 +60,11 @@ function isCurrentUrl($url): bool
 
     return $currentUrl == $url;
 }
+
+function showPageAttr($attr = 'title'): string
+{
+    include $_SERVER['DOCUMENT_ROOT'] . "/data/main_menu.php";
+    $page = getPage($menu, parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+
+    return !empty($page) ? $page[$attr] : "404 - Страница не найдена";
+}
