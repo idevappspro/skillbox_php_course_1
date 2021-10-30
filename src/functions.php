@@ -68,3 +68,35 @@ function showPageAttr($attr = 'title'): string
 
     return !empty($page) ? $page[$attr] : "404 - Страница не найдена";
 }
+
+function getFileBasename($file): string
+{
+    $file_path = $_SERVER['DOCUMENT_ROOT'] . "/upload/" . $file;
+    $ext = pathinfo($file_path, PATHINFO_EXTENSION);
+    $output = null;
+    if ($file_path) {
+        $output = basename($file_path, "." . $ext);
+    }
+    return $output;
+}
+
+function getFileSize($file): string
+{
+    $output = "";
+    $path = $_SERVER['DOCUMENT_ROOT'] . "/upload/" . $file;
+    $filesize = filesize($path);
+    $measure = [
+        ' b',
+        ' Kb',
+        ' Mb'
+    ];
+    if ($filesize < 10000) {
+        $output = $filesize . $measure[0];
+    } elseif ($filesize > 10000 && $filesize < 1000000) {
+        $output = round($filesize / 1024) . $measure[1];
+    } elseif ($filesize > 1000000) {
+        $output = round($filesize / 1024 / 1024, 1) . $measure[2];
+    }
+
+    return $output;
+}

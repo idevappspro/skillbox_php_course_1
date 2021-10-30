@@ -82,7 +82,7 @@ a:hover {
 }
 
 .main-menu li a.active, .main-menu.bottom li a.active {
-    text-decoration:underline;
+    text-decoration: underline;
 }
 
 .main-menu.bottom li a {
@@ -221,4 +221,90 @@ a:hover {
     margin: 0 0 10px 0;
     background-color: #CAE1B7;
     border-radius: 5px;
+}
+
+#gallery {
+    background-color: #e5e5e5;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.card {
+    display: flex;
+    border-radius: 5px;
+    flex-direction: column;
+    padding: 15px;
+    margin: 0 0 10px 0;
+}
+
+.error {
+    background-color: #FAC6D0;
+}
+
+.success {
+    background-color: #CAE1B7;
+}
+
+.form {
+    background-color: #C1CEFE;
+    border-radius: 6px;
+}
+
+.form-title {
+    font-size: larger;
+    font-weight: bold;
+    padding: 0 0 10px 0;
+}
+
+.form-control {
+    display: inline-flex;
+}
+
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-gap: 12px;
+}
+
+.image-card {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border-radius: 8px;
+}
+
+.image-meta {
+    display: flex;
+    padding: 8px;
+    background-color: #FFFFFC;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.image-control {
+    display: flex;
+}
+
+.image-title {
+    display: flex;
+    text-transform: capitalize;
+}
+
+.image-created_at {
+    display: flex;
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: auto;
+    background-color: #fff;
+    padding: 3px;
+    border-radius: 3px;
+    font-size: small;
+}
+
+.disabled {
+    opacity: 50%;
+}
+.hidden {
+    display: none;
 }

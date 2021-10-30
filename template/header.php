@@ -25,6 +25,7 @@ if (!empty($_POST)) {
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <link href="/styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@4.0/dist/fancybox.css"/>
     <title>Project - <?= showPageAttr('title'); ?></title>
 </head>
 
