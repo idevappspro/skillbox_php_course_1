@@ -1,6 +1,9 @@
 <?php
 
-// Action routing
+// Get configuration
+require_once __DIR__ . "/config.php";
+
+// Routes --> Actions
 if (isset($_POST['action'])) {
     switch ($_POST['action']) {
         case "index":
@@ -21,47 +24,50 @@ if (isset($_POST['action'])) {
 }
 
 // Actions
-
 function upload($payload): void
 {
-    $valid_extensions = ["jpg", "jpeg", "png"];
     $errors = [];
-    $message = [];
-
+    $uploaded_files = [];
     $count_of_files = count($payload['name']);
 
-    if ($count_of_files === 0) {
+    if ($count_of_files < UPLOAD_MIN_COUNT) {
         $errors[] = "Не выбран файл для загрузки. Выберите хотя бы один файл.";
-    } elseif ($count_of_files > 5) {
-        $errors[] = "Превышено допустимое число файлов для загрузки. Выберите не более 5.";
-    } else {
-        for ($i = 0; $i < $count_of_files; $i++) {
-            // If file is not present
-            if ($_FILES["file"]["error"][$i] > 0) {
-                $errors[] = "Error: " . $_FILES["file"]["error"][$i];
-            } else { // If file is present
-                // Validate file extension
-                $path = $_FILES['file']['name'][$i];
-                $ext = pathinfo($path, PATHINFO_EXTENSION);
-                if (in_array($ext, $valid_extensions)) {
-                    // if extension is valid
-                    if ($_FILES["file"]["size"][$i] > 2097152) {
-                        $errors[] = 'Недопустимый размер файла (не более 2 Мб) : ' . $_FILES["file"]["name"][$i];
-                    } else {
-                        if (file_exists($_SERVER['DOCUMENT_ROOT'] . '/upload/' . $_FILES["file"]["name"][$i])) {
-                            $errors[] = 'Файл с таким именем уже существует : ' . $_FILES["file"]["name"][$i];
-                        } else { //
-                            $new_file_name = "IMG_" . substr(sha1($_FILES["file"]["name"][$i]), 0, 5);
-                            $file_name = preg_replace("/[^a-zA-Z0-9.]/", "_", $new_file_name . '.' . $ext);
-                            move_uploaded_file($_FILES["file"]["tmp_name"][$i], $_SERVER['DOCUMENT_ROOT'] . '/upload/' . $file_name);
-                            $message[] = 'Файл успешно загружен : ' . $file_name;
-                        }
-                    }
-                } else {
-                    $errors[] = 'Неверное расширение файла : ' . $_FILES["file"]["name"][$i];
-                }
-            }
+    } elseif ($count_of_files > UPLOAD_MAX_COUNT) {
+        $errors[] = "Превышено допустимое число файлов для загрузки. Выберите не более " . UPLOAD_MAX_COUNT . '.';
+    }
+
+    for ($i = 0; $i < $count_of_files; $i++) {
+        // Validate file's presence
+        if ($_FILES["file"]["error"][$i] > 0) {
+            $errors[] = "Error: " . $_FILES["file"]["error"][$i];
+            continue;
         }
+        // Validate file's extension
+        $tmp_file = $_FILES['file']['tmp_name'][$i];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $tmp_file);
+        finfo_close($finfo);
+        if (!in_array($mime_type, UPLOAD_MIME_TYPES)) {
+            $errors[] = 'Неверное расширение файла : ' . $_FILES["file"]["name"][$i];
+            continue;
+        }
+        // Validate file size
+        if ($_FILES["file"]["size"][$i] > UPLOAD_MAX_SIZE) {
+            $errors[] = 'Недопустимый размер файла (не более 2 Мб) : ' . $_FILES["file"]["name"][$i];
+            continue;
+        }
+        // Validate file duplicate by name
+        if (file_exists(UPLOAD_PATH . $_FILES["file"]["name"][$i])) {
+            $errors[] = 'Файл с таким именем уже существует : ' . $_FILES["file"]["name"][$i];
+            continue;
+        }
+        // Upload validated file'
+        $path = $_FILES['file']['name'][$i];
+        $ext = pathinfo($path, PATHINFO_EXTENSION);
+        $new_file_name = "IMG_" . substr(sha1($_FILES["file"]["name"][$i]), 0, 5);
+        $file_name = preg_replace("/[^a-zA-Z0-9.]/", "_", $new_file_name . '.' . $ext);
+        move_uploaded_file($_FILES["file"]["tmp_name"][$i], UPLOAD_PATH . $file_name);
+        $uploaded_files[] = "&laquo;" . $file_name . "&raquo;";
     }
 
     if (count($errors) > 0) {
@@ -70,6 +76,11 @@ function upload($payload): void
             "success" => false
         ];
     } else {
+        if (count($uploaded_files) > 1) {
+            $message = "Файлы успешно загружены: " . implode(', ', $uploaded_files);
+        } else {
+            $message = "Файл загружен: &laquo;" . $uploaded_files[0] . "&raquo;";
+        }
         $response = [
             "success" => true,
             "message" => $message
@@ -80,17 +91,17 @@ function upload($payload): void
     echo json_encode($response, JSON_PRETTY_PRINT);
 }
 
-function delete($files)
+function delete($files): void
 {
     $errors = [];
-    $message = [];
+    $deleted_files = [];
 
     foreach ($files as $file) {
         // if file exists
-        if (file_exists($_SERVER['DOCUMENT_ROOT'] . "/upload/" . $file)) {
+        if (file_exists(UPLOAD_PATH . $file)) {
             // delete file
-            if (unlink($_SERVER['DOCUMENT_ROOT'] . "/upload/" . $file)) {
-                $message[] = "Файл " . $file . " удален.";
+            if (unlink(UPLOAD_PATH . $file)) {
+                $deleted_files[] = "&laquo;" . $file . "&raquo;";
             } else {
                 $errors[] = "Во время удаления файла " . $file . " возникла проблема.";
             }
@@ -103,6 +114,11 @@ function delete($files)
             "success" => false
         ];
     } else {
+        if (count($deleted_files) > 1) {
+            $message = "Файлы успешно удалены: " . implode(", ", $deleted_files);
+        } else {
+            $message = "Файл успешно удален: " . $deleted_files[0];
+        }
         $response = [
             "success" => true,
             'message' => $message
@@ -115,30 +131,16 @@ function delete($files)
 
 function index(): void
 {
-    $collection = array_slice(scandir($_SERVER['DOCUMENT_ROOT'] . '/upload/'), 2);
+    $collection = array_slice(scandir(UPLOAD_PATH), 2);
     $output = [];
 
     foreach ($collection as $file) {
         //Basename
-        $file_path = $_SERVER['DOCUMENT_ROOT'] . "/upload/" . $file;
+        $file_path = UPLOAD_PATH . $file;
         $ext = pathinfo($file_path, PATHINFO_EXTENSION);
         $baseName = null;
         if ($file_path) {
             $baseName = basename($file_path, "." . $ext);
-        }
-        //Size
-        $filesize = filesize($file_path);
-        $measure = [
-            ' b',
-            ' Kb',
-            ' Mb'
-        ];
-        if ($filesize < 10000) {
-            $filesize = $filesize . $measure[0];
-        } elseif ($filesize > 10000 && $filesize < 1000000) {
-            $filesize = round($filesize / 1024) . $measure[1];
-        } elseif ($filesize > 1000000) {
-            $filesize = round($filesize / 1024 / 1024, 1) . $measure[2];
         }
         //Creation date
         $date_created = date("d.m.Y H:i", fileatime($file_path));
@@ -148,13 +150,28 @@ function index(): void
             "name" => $baseName . '.' . $ext,
             'baseName' => $baseName,
             'url' => '//' . $_SERVER['HTTP_HOST'] . '/upload/' . $file,
-            'size' => $filesize,
+            'size' => getFileSize(filesize($file_path)),
             'created_at' => $date_created
         ];
     }
-    //return meta-data as array of objects ib JSON
+
+    // Return meta-data as array of objects to JSON
     http_response_code(200);
     echo json_encode([
         "images" => $output
     ], JSON_UNESCAPED_SLASHES, JSON_PRETTY_PRINT);
+}
+
+// Helper Functions
+function getFileSize($filesize): string
+{
+    $measure = [' b', ' Kb', ' Mb'];
+    if ($filesize < 10000) {
+        $filesize = $filesize . $measure[0];
+    } elseif ($filesize > 10000 && $filesize < 1000000) {
+        $filesize = round($filesize / 1024) . $measure[1];
+    } elseif ($filesize > 1000000) {
+        $filesize = round($filesize / 1024 / 1024, 1) . $measure[2];
+    }
+    return $filesize;
 }

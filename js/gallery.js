@@ -3,6 +3,7 @@ let selected_images = [];
 let btn_delete = $('#btn-delete');
 let errors = [];
 let alertBox = $("#alert");
+let checkAll = $("#checkAll");
 
 // Functions
 function deleteFiles() {
@@ -59,6 +60,7 @@ function getImages() {
     $.ajax(settings).done(function (response) {
         all_images = response.images
         renderGallery(all_images);
+        checkAll.prop("checked", false);
     });
 }
 
@@ -73,21 +75,22 @@ function renderGallery(payload) {
         let grid = $("#image-grid");
         let content = $('<div id="image-grid" class="image-grid"></div>');
         $(payload).each((i) => {
+            let file = payload[i];
             content.append(
                 '<div class="image-card" id="image-card-' + i + '">\n' +
-                '    <a href="' + payload[i]['url'] + '" data-fancybox="gallery">\n' +
+                '    <a href="' + file['url'] + '" data-fancybox="gallery">\n' +
                 '        <div\n' +
-                '            style="background: url(' + payload[i]['url'] + ') center center no-repeat; background-size: cover; height: 140px; width: auto;"></div>\n' +
+                '            style="background: url(' + file['url'] + ') center center no-repeat; background-size: cover; height: 140px; width: auto;"></div>\n' +
                 '    </a>\n' +
                 '    <div\n' +
-                '        class="image-created_at">' + payload[i]['created_at'] + '</div>\n' +
+                '        class="image-created_at">' + file['created_at'] + '</div>\n' +
                 '    <div class="image-meta">\n' +
-                '        <div class="image-title">' + payload[i]['baseName'] + '</div>\n' +
-                '        <div class="image-size">' + payload[i]['size'] + '</div>\n' +
+                '        <div class="image-title">' + file['baseName'] + '</div>\n' +
+                '        <div class="image-size">' + file['size'] + '</div>\n' +
                 '        <div class="image-control">\n' +
                 '            <label for="image-selector-' + i + '">\n' +
                 '                <input type="checkbox" class="checkbox" id="image-selector-' + i + '" name="images[]"\n' +
-                '                       style="margin-right: 6px;" value="' + payload[i]['name'] + '" onclick="toggleCheckbox(' + i + ')">Удалить\n' +
+                '                       style="margin-right: 6px;" value="' + file['name'] + '" onclick="toggleCheckbox(' + i + ')">Удалить\n' +
                 '            </label>\n' +
                 '        </div>\n' +
                 '    </div>\n' +
@@ -110,13 +113,13 @@ function toggleCheckbox(id) {
             disabledButton();
         }
         if (selected_images.length < all_images.length) {
-            $("#checkAll").prop('checked', false)
+            checkAll.prop('checked', false)
         }
     }
 }
 
 function toggleCheckAll() {
-    if ($("#checkAll").is(":checked")) {
+    if (checkAll.is(":checked")) {
         $('input:checkbox').prop('checked', true);
         all_images.forEach((value) => {
             selected_images.push(value['name']);
@@ -149,7 +152,7 @@ function upload(payload) {
     $.ajax(settings).done(function (response) {
         if (response.success) {
             getImages();
-            showMessage(response.message)
+            showMessage(response.message);
         } else {
             getImages();
             showErrors(response.errors);
@@ -162,6 +165,7 @@ function initialize() {
     selected_images = [];
     alertBox.addClass("hidden");
     alertBox.html("");
+    checkAll.prop("checked", false);
 }
 
 function resetForm() {
@@ -173,7 +177,7 @@ function showErrors(errors) {
     alertBox.addClass("error");
     alertBox.removeClass("hidden");
     errors.forEach((error) => {
-        alertBox.append('<div style="padding: 4px 0">' + error + '</div>');
+        alertBox.append('<div style="line-height: 1.6;">' + error + '</div>');
     })
     resetForm();
 }
@@ -182,9 +186,7 @@ function showMessage(payload) {
     alertBox.removeClass("error");
     alertBox.addClass("success");
     alertBox.removeClass("hidden");
-    payload.forEach((message) => {
-        alertBox.append('<div style="padding: 4px 0">' + message + '</div>');
-    })
+    alertBox.append('<div style="line-height: 1.6;">' + payload + '</div>');
     resetForm();
 }
 
@@ -199,26 +201,27 @@ function validateFiles() {
         resetForm();
     } else {
         for (let i = 0; i < files.length; i++) {
+            let file = files[i];
             // Validate file size
-            if (files[i].size > 2097152) {
-                errors.push("Недопустимый размер файла (не более 2 Мб) : " + files[i]['name']);
+            if (file.size > 2097152) {
+                errors.push("Недопустимый размер файла (не более 2 Мб) : " + file['name']);
                 showErrors(errors);
                 resetForm();
                 break;
             }
             // Validate extension
-            let ext = files[i].name.split(".");
+            let ext = file.name.split(".");
             ext = ext[ext.length - 1].toLowerCase();
             if (extensions.lastIndexOf(ext) === -1) {
-                errors.push("Недопустимое расширение файла (только jpg, jpeg, png) : " + files[i]['name']);
+                errors.push("Недопустимое расширение файла (только jpg, jpeg, png) : " + file['name']);
                 showErrors(errors);
                 resetForm();
                 break;
             }
             // Validate if file name already exists
             all_images.forEach((image) => {
-                if (files[i]['name'] === image['name']) {
-                    errors.push("Файл с таким именем уже существует : " + files[i]['name']);
+                if (file['name'] === image['name']) {
+                    errors.push("Файл с таким именем уже существует : " + file['name']);
                     showErrors(errors);
                     resetForm();
                 }
