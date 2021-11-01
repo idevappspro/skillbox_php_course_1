@@ -65,7 +65,7 @@ function upload($payload): void
         $path = $_FILES['file']['name'][$i];
         $ext = pathinfo($path, PATHINFO_EXTENSION);
         $new_file_name = "IMG_" . substr(sha1($_FILES["file"]["name"][$i]), 0, 5);
-        $file_name = preg_replace("/[^a-zA-Z0-9.]/", "_", $new_file_name . '.' . $ext);
+        $file_name = strtoupper(preg_replace("/[^a-zA-Z0-9.]/", "_", $new_file_name)) . '.' . $ext;
         move_uploaded_file($_FILES["file"]["tmp_name"][$i], UPLOAD_PATH . $file_name);
         $uploaded_files[] = "&laquo;" . $file_name . "&raquo;";
     }
@@ -86,8 +86,6 @@ function upload($payload): void
             "message" => $message
         ];
     }
-
-    http_response_code(200);
     echo json_encode($response, JSON_PRETTY_PRINT);
 }
 
@@ -95,16 +93,16 @@ function delete($files): void
 {
     $errors = [];
     $deleted_files = [];
+    $imageList = array_slice(scandir(UPLOAD_PATH), 2);
 
     foreach ($files as $file) {
-        // if file exists
-        if (file_exists(UPLOAD_PATH . $file)) {
-            // delete file
-            if (unlink(UPLOAD_PATH . $file)) {
-                $deleted_files[] = "&laquo;" . $file . "&raquo;";
-            } else {
-                $errors[] = "Во время удаления файла " . $file . " возникла проблема.";
-            }
+        //Validate file is in upload folder
+        $filePath = realpath(UPLOAD_PATH . $file);
+        if (in_array($file, $imageList) && (strpos(realpath($filePath), realpath(UPLOAD_PATH)) === 0)) {
+            unlink($filePath);
+            $deleted_files[] = "&laquo;" . $file . "&raquo;";
+        } else {
+            $errors[] = "Попытка удаления несуществующего файла: " . $file;
         }
     }
 
@@ -124,8 +122,6 @@ function delete($files): void
             'message' => $message
         ];
     }
-
-    http_response_code(200);
     echo json_encode($response, JSON_PRETTY_PRINT);
 }
 
@@ -138,10 +134,8 @@ function index(): void
         //Basename
         $file_path = UPLOAD_PATH . $file;
         $ext = pathinfo($file_path, PATHINFO_EXTENSION);
-        $baseName = null;
-        if ($file_path) {
-            $baseName = basename($file_path, "." . $ext);
-        }
+        $baseName = basename($file_path, "." . $ext);
+
         //Creation date
         $date_created = date("d.m.Y H:i", fileatime($file_path));
 
@@ -149,14 +143,13 @@ function index(): void
         $output[] = [
             "name" => $baseName . '.' . $ext,
             'baseName' => $baseName,
-            'url' => '//' . $_SERVER['HTTP_HOST'] . '/upload/' . $file,
+            'url' => '/upload/' . $file,
             'size' => getFileSize(filesize($file_path)),
             'created_at' => $date_created
         ];
     }
 
-    // Return meta-data as array of objects to JSON
-    http_response_code(200);
+    // Return meta-data as array of objects to JSO
     echo json_encode([
         "images" => $output
     ], JSON_UNESCAPED_SLASHES, JSON_PRETTY_PRINT);
@@ -170,7 +163,7 @@ function getFileSize($filesize): string
         $filesize = $filesize . $measure[0];
     } elseif ($filesize > 10000 && $filesize < 1000000) {
         $filesize = round($filesize / 1024) . $measure[1];
-    } elseif ($filesize > 1000000) {
+    } else {
         $filesize = round($filesize / 1024 / 1024, 1) . $measure[2];
     }
     return $filesize;

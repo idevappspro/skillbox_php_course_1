@@ -23,26 +23,24 @@ function showPageHeader(): void
     include $_SERVER['DOCUMENT_ROOT'] . "/data/main_menu.php";
 
     $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-    $page = getPage($menu, $path);
-    $error = false;
+    $page = getPage($menu);
+    $error = true;
+    $page_title = "Ошибка 404";
+    $page_description = "Запрошенная страница не найдена.";
 
     if (!empty($page)) {
+        $error = false;
         $page_title = $page['title'];
         $page_description = $page['description'];
-    } else {
-        $error = true;
-        $page_title = "Ошибка 404";
-        $page_description = "Запрошенная страница не найдена.";
     }
-
     include $_SERVER['DOCUMENT_ROOT'] . "/template/include/page_title.php";
 }
 
-function getPage($pages, $uriPath): array
+function getPage($pages): array
 {
     $page = [];
     foreach ($pages as $item) {
-        if ($uriPath === $item['path']) {
+        if (isCurrentUrl($item['path'])) {
             $page = $item;
             break;
         }
@@ -64,9 +62,8 @@ function isCurrentUrl($url): bool
 function showPageAttr($attr = 'title'): string
 {
     include $_SERVER['DOCUMENT_ROOT'] . "/data/main_menu.php";
-    $page = getPage($menu, parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
-
-    return !empty($page) ? $page[$attr] : "404 - Страница не найдена";
+    $page = getPage($menu);
+    return $page[$attr] ?? "404 - Страница не найдена";
 }
 
 function getFileBasename($file): string

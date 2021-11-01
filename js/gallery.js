@@ -27,8 +27,7 @@ function deleteFiles() {
             showMessage(response.message);
             disabledButton();
         } else {
-
-            showMessage(response.message);
+            showErrors(response.errors);
             disabledButton();
         }
         getImages();
