@@ -1,1 +1,0 @@
-<div class="<?= $isAuth ? "auth_success" : "auth_error" ?>"><?= $message ?></div>
