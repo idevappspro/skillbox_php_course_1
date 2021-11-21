@@ -1,5 +1,25 @@
 <?php
 
+function connectDB(): PDO
+{
+    static $pdo;
+
+    if (null === $pdo) {
+        try {
+            $options = [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+            ];
+            $pdo = new PDO("mysql:host=localhost; dbname=sql_homework_ide", "sql_homework_ide", "KnMhtadTpGwYCTb6", $options);
+        } catch (PDOException $e) {
+            throw new PDOException($e->getMessage(), (int)$e->getCode());
+        }
+    }
+
+    return $pdo;
+}
+
 function init_session(): void
 {
     if (session_status() == PHP_SESSION_NONE) {
@@ -47,13 +67,14 @@ function isAuth(): bool
     return false;
 }
 
-function Authenticate($login, $password): void
+function Authenticate(string $login, string $password): void
 {
-    $users = include $_SERVER['DOCUMENT_ROOT'] . '/data/users.php';
-    $passwords = include $_SERVER['DOCUMENT_ROOT'] . '/data/passwords.php';
+    $pdo = connectDB();
+    $stmt = $pdo->prepare('SELECT * FROM users WHERE `login` = :login LIMIT 1');
+    $stmt->execute(['login' => $login]);
+    $credentials = $stmt->fetch();
 
-    $i = array_search($login, $users);
-    if ($password === $passwords[$i]) {
+    if (!empty($credentials['login']) && password_verify($password, $credentials['password'])) {
         init_session();
         $arr_cookie_options = [
             'expires' => time() + 60 * 60 * 24 * 31,
@@ -65,6 +86,7 @@ function Authenticate($login, $password): void
         ];
         $_SESSION['AUTH'] = true;
         $_SESSION['LOGIN'] = $_POST['login'];
+        $_SESSION['USER_ID'] = $credentials['id'];
         $_SESSION['LAST_REQUEST_TIME'] = time() + 1800;
         setcookie('LOGIN', $_SESSION['LOGIN'], $arr_cookie_options);
         session_flash_set('type', 'success');
@@ -82,9 +104,48 @@ function Authenticate($login, $password): void
     }
 }
 
+function getUserProfile(): object
+{
+    $user_id = $_SESSION['USER_ID'];
+    $pdo = connectDB();
+    $stmt = $pdo->prepare('SELECT u.login, `user_id`, `email`, `full_name`, `phone` from `users` AS u LEFT JOIN `profiles` p ON u.id = p.user_id WHERE `user_id` = ? LIMIT 1');
+    $stmt->execute([$user_id]);
+    return $stmt->fetchObject();
+}
+
+function getUserGroups(int $user_id): array
+{
+    $pdo = connectDB();
+    $sql = "SELECT `name`, `description` FROM `user_group` LEFT JOIN `groups` g ON g.id = user_group.group_id WHERE `user_id` = ?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$user_id]);
+    return $stmt->fetchAll();
+}
+
+function updateUserProfile($payload): void
+{
+    $pdo = connectDB();
+    $sql = "UPDATE `profiles` SET `full_name` = :full_name, `email` = :email, `phone` = :phone WHERE `user_id` = :user_id";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        ':full_name' => $payload['full_name'],
+        ':email' => $payload['email'],
+        ':phone' => $payload['phone'],
+        ':user_id' => $payload['user_id']
+    ]);
+    if ($stmt->rowCount() === 0) {
+        session_flash_set('type', 'error');
+        session_flash_set('message', 'Пожалуйста введите измененные данные.');
+    } else {
+        session_flash_set('type', 'success');
+        session_flash_set('message', 'Профиль успешно обновлен');
+    }
+}
+
 function logout()
 {
     if (isset($_SESSION)) {
+        unset($_SESSION['USER_ID']);
         session_unset();
         session_destroy();
     }
@@ -109,24 +170,30 @@ function arraySort(array $array, $key, $sort): array
 
 function getMenu(): array
 {
-    return include $_SERVER['DOCUMENT_ROOT'] . '/data/main_menu.php';
+    $pdo = connectDB();
+    $stmt = $pdo->prepare('SELECT * FROM menu');
+    $stmt->execute();
+    $menu = $stmt->fetchAll();
+    if (!isAuth()) {
+        unset($menu[7]);
+    }
+    return $menu;
 }
 
 function showMenu($ulClass = ''): void
 {
+    $menu = getMenu();
     if ($ulClass === "bottom") {
-        $menu = arraySort(getMenu(), 'title', SORT_DESC);
+        $menu = arraySort($menu, 'title', SORT_DESC);
     } else {
-        $menu = arraySort(getMenu(), 'sort', SORT_ASC);
+        $menu = arraySort($menu, 'sort', SORT_ASC);
     }
-
     include $_SERVER['DOCUMENT_ROOT'] . '/template/include/menu.php';
 }
 
 function showPageHeader(): void
 {
-    $menu = include $_SERVER['DOCUMENT_ROOT'] . '/data/main_menu.php';
-
+    $menu = getMenu();
     $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
     $page = getPage($menu);
     $error = true;
@@ -165,7 +232,7 @@ function isCurrentUrl($url): bool
 
 function showPageAttr($attr = 'title'): string
 {
-    $menu = include $_SERVER['DOCUMENT_ROOT'] . '/data/main_menu.php';
+    $menu = getMenu();
     $page = getPage($menu);
     return $page[$attr] ?? "404 - Страница не найдена";
 }
@@ -190,3 +257,5 @@ function getFileSize($file): string
 
     return $output;
 }
+
+$pdo = null;

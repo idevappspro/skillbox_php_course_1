@@ -3,13 +3,13 @@
 <div class="card form">
     <div class="form-title">Загрузить файлы в галерею</div>
     <form method="post" id="frmUpload" name="frmUpload" enctype="multipart/form-data">
-        <div class="form-control">
+        <div class="form-control-inline">
             <label for="files">
                 <input type="file" id="file" name="file[]" multiple="multiple" required>
             </label>
             <input type="hidden" name="action" value="upload">
         </div>
-        <div class="form-control">
+        <div class="form-control-inline">
             <input type="submit" id="btn-submit-upload" value="Загрузить">
         </div>
     </form>
