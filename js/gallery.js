@@ -72,18 +72,19 @@ function renderGallery(payload) {
         $('#image-grid').show();
         $('#gallery-empty').hide();
         let grid = $("#image-grid");
-        let content = $('<div id="image-grid" class="image-grid"></div>');
+        let content = $('<div id="image-grid" class="row row-cols-lg-5 row-cols-md-4 row-cols-sm-2 row-cols-1 g-3"></div>');
         $(payload).each((i) => {
             let file = payload[i];
             content.append(
-                '<div class="image-card" id="image-card-' + i + '">\n' +
+                '<div class="col" id="img-thumbnail-' + i + '">\n' +
+                '<div class="img-thumbnail shadow-sm">'+
                 '    <a href="' + file['url'] + '" data-fancybox="gallery">\n' +
                 '        <div\n' +
                 '            style="background: url(' + file['url'] + ') center center no-repeat; background-size: cover; height: 140px; width: auto;"></div>\n' +
                 '    </a>\n' +
-                '    <div\n' +
+                '    <div class="image-meta p-2">\n' +
+                '   <div\n' +
                 '        class="image-created_at">' + file['created_at'] + '</div>\n' +
-                '    <div class="image-meta">\n' +
                 '        <div class="image-title">' + file['baseName'] + '</div>\n' +
                 '        <div class="image-size">' + file['size'] + '</div>\n' +
                 '        <div class="image-control">\n' +
@@ -92,6 +93,7 @@ function renderGallery(payload) {
                 '                       style="margin-right: 6px;" value="' + file['name'] + '" onclick="toggleCheckbox(' + i + ')">Удалить\n' +
                 '            </label>\n' +
                 '        </div>\n' +
+                '    </div>\n' +
                 '    </div>\n' +
                 '</div>'
             )
@@ -163,17 +165,23 @@ function initialize() {
     errors = [];
     selected_images = [];
     alertBox.addClass("hidden");
+    alertBox.removeClass("alert");
+    alertBox.removeClass("alert-success");
+    alertBox.removeClass("alert-error");
     alertBox.html("");
     checkAll.prop("checked", false);
 }
 
 function resetForm() {
     $('form[name="frmUpload"]')[0].reset();
+    alertBox.addClass("hidden");
 }
 
 function showErrors(errors) {
-    alertBox.removeClass("success");
-    alertBox.addClass("error");
+    alertBox.removeClass("alert");
+    alertBox.removeClass("alert-success");
+    alertBox.addClass("alert");
+    alertBox.addClass("alert-danger");
     alertBox.removeClass("hidden");
     errors.forEach((error) => {
         alertBox.append('<div style="line-height: 1.6;">' + error + '</div>');
@@ -182,8 +190,10 @@ function showErrors(errors) {
 }
 
 function showMessage(payload) {
-    alertBox.removeClass("error");
-    alertBox.addClass("success");
+    alertBox.removeClass("alert");
+    alertBox.removeClass("alert-danger");
+    alertBox.addClass("alert");
+    alertBox.addClass("alert-success");
     alertBox.removeClass("hidden");
     alertBox.append('<div style="line-height: 1.6;">' + payload + '</div>');
     resetForm();
@@ -191,7 +201,7 @@ function showMessage(payload) {
 
 function validateFiles() {
     initialize();
-    let files = $('.form :input[type=file]').get(0).files;
+    let files = $('#frmUpload :input[type=file]').get(0).files;
     let extensions = ["jpg", "jpeg", "png"];
     // Validate file count
     if (files.length === 0 || files.length > 5) {
@@ -253,6 +263,3 @@ $(function () {
 
     });
 });
-
-
-

@@ -1,52 +1,39 @@
 <?php $profile = getUserProfile(); ?>
-<div class="row">
-    <div class="col-md-6">
-        <form action="/profile/" class="card form" method="post">
-            <input type="hidden" name="update_profile" value="1">
-            <div class="row" style="padding-bottom: 12px;">
-                <div class="col-md-12">
-                    <div class="form-control">
-                        <label for="full_name">Ф.И.О.</label>
-                        <input type="text" name="full_name" id="full_name" placeholder="Фамилия Имя Отчество"
-                               value="<?= $profile->full_name ?>" required>
+<div class="row bg-light py-3">
+    <div class="col-xs-12 col-sm-12 col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form action="/profile/" method="POST">
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label">Имя пользователя</label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" aria-describedby="full_name_help" require value="<?= $profile->full_name; ?>">
+                        <!-- <div id="full_name_help" class="form-text">We'll never share your email with anyone else.</div> -->
                     </div>
-                </div>
-            </div>
-            <div class="row" style="padding-bottom: 12px;">
-                <div class="col-md-12">
-                    <div class="form-control">
-                        <label for="email">Email</label>
-                        <input type="email" name="email" id="email" placeholder="Адрес электронной почты"
-                               value="<?= $profile->email ?>">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="text" class="form-control" id="email" name="email" aria-describedby="email_help" require value="<?= $profile->email; ?>" placeholder="Адрес электронной почты">
+                        <!-- <div id="email_help" class="form-text">We'll never share your email with anyone else.</div> -->
                     </div>
-                </div>
-            </div>
-            <div class="row" style="padding-bottom: 12px;">
-                <div class="col-md-12">
-                    <div class="form-control">
-                        <label for="phone">Телефон</label>
-                        <input type="text" name="phone" id="phone" placeholder="Номер телефона"
-                               value="<?= $profile->phone ?>">
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Телефон</label>
+                        <input type="text" class="form-control" id="phone" name="phone" placeholder="Номер телефона" value="<?= $profile->phone; ?>">
                     </div>
-                </div>
+                    <input type="hidden" name="update_profile" value="1">
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </form>
             </div>
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="box">
-                        <button type="submit" class="btn bg-green">Сохранить</button>
-                    </div>
-                </div>
-            </div>
-        </form>
+        </div>
     </div>
-    <div class="col-md-6">
-        <div class="card bg-whitesmoke">
-            <h3 class="mb-4">Пользовательские группы</h3>
-            <ul>
-                <?php foreach (getUserGroups($profile->user_id) as $key => $group): ?>
-                    <li><?= $group['name']; ?></li>
-                <?php endforeach; ?>
-            </ul>
+    <div class="col-xs-12 col-sm-12 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="mb-4">Группы пользователя</h5>
+                <ul>
+                    <?php foreach (getUserGroups($profile->user_id) as $key => $group) : ?>
+                        <li><?= $group['name']; ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
         </div>
     </div>
 </div>

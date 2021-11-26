@@ -1,21 +1,26 @@
-<?php include $_SERVER['DOCUMENT_ROOT'] . '/template/header.php' ?>
-<table class="table">
-    <tr>
-        <td class="left-collum-index">
-            <div class="row">
-                <div class="col-md-12">
-                    <?php include_once $_SERVER['DOCUMENT_ROOT'] . "/template/include/message.php"; ?>
-                    <div class="mb-4">
-                        <!--Page header-->
-                        <?php showPageHeader(); ?>
-                    </div>
-                </div>
+<?php include $_SERVER['DOCUMENT_ROOT'] . '/template/header.php';?>
+<div class="container bg-white">
+    <div class="row">
+        <div class="col-md-12">
+            <!--Page header-->
+            <?php showPageHeader(); ?>
+        </div>
+    </div>
+    <!-- Alert message -->
+    <div class="row">
+        <div class="col-md-12">
+            <?php include $_SERVER['DOCUMENT_ROOT'] . "/template/include/message.php"; ?>
+        </div>
+    </div>
+    <?php if (!empty($page)) : ?>
+        <div class="row">
+            <div class="col-md-12">
+                <!--Page content-->
+                <?php if ($page != "") {
+                    include $page;
+                } ?>
             </div>
-            <!--Page content-->
-            <?php if (isCurrentUrl('/gallery/')) include_once $_SERVER['DOCUMENT_ROOT'] . '/template/include/gallery.php'; ?>
-            <?php if (isCurrentUrl('/profile/')) include_once $_SERVER['DOCUMENT_ROOT'] . '/template/include/profile.php'; ?>
-        </td>
-        <?php include $_SERVER['DOCUMENT_ROOT'] . '/template/include/auth_form.php'; ?>
-    </tr>
-</table>
+        </div>
+    <?php endif; ?>
+</div>
 <?php include $_SERVER['DOCUMENT_ROOT'] . '/template/footer.php' ?>
