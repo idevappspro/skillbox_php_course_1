@@ -32,13 +32,6 @@ function connectDB(): PDO
 function init_session(): void
 {
     if (session_status() == PHP_SESSION_NONE) {
-        session_set_cookie_params([
-            'path' => '/',
-            'domain' => $_SERVER['HTTP_HOST'],
-            'secure' => true,
-            'httponly' => true,
-            'samesite' => 'lax'
-        ]);
         session_start();
     }
 }
@@ -101,11 +94,11 @@ function Authenticate(string $login, string $password): void
         session_flash_set('message', 'С возвращением, ' . getUserProfile()->full_name . '!');
         header("Location: /");
         exit();
-    } else {
-        init_session();
-        session_flash_set('type', 'danger');
-        session_flash_set('message', 'Ошибка авторизации. Неправильный логин или пароль.');
     }
+
+    init_session();
+    session_flash_set('type', 'danger');
+    session_flash_set('message', 'Ошибка авторизации. Неправильный логин или пароль.');
 }
 
 function getUserProfile(): object
